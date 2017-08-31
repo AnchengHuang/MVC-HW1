@@ -7,18 +7,20 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using MVC_HW.Models;
+using PagedList;
 
 namespace MVC_HW.Controllers
 {
-    public class 客戶資料Controller : Controller
+    public class 客戶資料Controller : BaseController
     {
         private 客戶資料Entities db = new 客戶資料Entities();
 
         // GET: 客戶資料
-        public ActionResult Index()
+        public ActionResult Index(int pageNo = 1)
         {
-            var 客戶資料 = db.客戶資料.Where(x => x.is_del != true).Take(10);
-            return View(客戶資料);
+            var 客戶資料 = 客戶資料repo.取得未刪除資料().OrderBy(x=>x.Id);
+            var data = 客戶資料.ToPagedList(pageNo, pageSize);
+            return View(data);
         }
 
         // GET: 客戶資料/Details/5
@@ -28,7 +30,7 @@ namespace MVC_HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶資料 客戶資料 = db.客戶資料.Find(id);
+            客戶資料 客戶資料 = 客戶資料repo.Find(id.Value);
             if (客戶資料 == null)
             {
                 return HttpNotFound();
@@ -51,8 +53,8 @@ namespace MVC_HW.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.客戶資料.Add(客戶資料);
-                db.SaveChanges();
+                客戶資料repo.Add(客戶資料);
+                客戶資料repo.UnitOfWork.Commit();
                 return RedirectToAction("Index");
             }
 
@@ -110,10 +112,8 @@ namespace MVC_HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            客戶資料 客戶資料 = db.客戶資料.Find(id);
-            //db.客戶資料.Remove(客戶資料);
-            客戶資料.is_del = true;
-            db.SaveChanges();
+            客戶資料repo.delete(id);
+
             return RedirectToAction("Index");
         }
 
@@ -124,13 +124,13 @@ namespace MVC_HW.Controllers
             return View("Index",result);
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        //protected override void Dispose(bool disposing)
+        //{
+        //    if (disposing)
+        //    {
+        //        db.Dispose();
+        //    }
+        //    base.Dispose(disposing);
+        //}
     }
 }

@@ -7,17 +7,20 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using MVC_HW.Models;
+using PagedList;
 
 namespace MVC_HW.Controllers
 {
-    public class CUSTOMER_DETAILController : Controller
+    public class CUSTOMER_DETAILController : BaseController
     {
         private 客戶資料Entities db = new 客戶資料Entities();
 
         // GET: CUSTOMER_DETAIL
-        public ActionResult Index()
+        public ActionResult Index(int pageNo = 1)
         {
-            return View(db.CUSTOMER_DETAIL.ToList());
+            var CUSTOMER_DETAIL = db.CUSTOMER_DETAIL.ToList();
+            var data = CUSTOMER_DETAIL.ToPagedList(pageNo, pageSize);
+            return View(data);
         }
 
         //// GET: CUSTOMER_DETAIL/Details/5
@@ -115,13 +118,13 @@ namespace MVC_HW.Controllers
         //    return RedirectToAction("Index");
         //}
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        //protected override void Dispose(bool disposing)
+        //{
+        //    if (disposing)
+        //    {
+        //        db.Dispose();
+        //    }
+        //    base.Dispose(disposing);
+        //}
     }
 }

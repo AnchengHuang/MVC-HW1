@@ -7,18 +7,20 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using MVC_HW.Models;
+using PagedList;
 
 namespace MVC_HW.Controllers
 {
-    public class 客戶聯絡人Controller : Controller
+    public class 客戶聯絡人Controller : BaseController
     {
-        private 客戶資料Entities db = new 客戶資料Entities();
+        //private 客戶資料Entities db = new 客戶資料Entities();
 
         // GET: 客戶聯絡人
-        public ActionResult Index()
+        public ActionResult Index(int pageNo = 1)
         {
-            var 客戶聯絡人 = db.客戶聯絡人.Include(客 => 客.客戶資料).Where(x => x.is_del != true).Take(10);
-            return View(客戶聯絡人);
+            var 客戶聯絡人 = 客戶聯絡人repo.取得未刪除資料().OrderBy(x=>x.姓名);
+            var data = 客戶聯絡人.ToPagedList(pageNo, pageSize);
+            return View(data);
         }
 
         // GET: 客戶聯絡人/Details/5
@@ -28,7 +30,7 @@ namespace MVC_HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            客戶聯絡人 客戶聯絡人 = 客戶聯絡人repo.Find(id.Value);
             if (客戶聯絡人 == null)
             {
                 return HttpNotFound();
@@ -39,7 +41,7 @@ namespace MVC_HW.Controllers
         // GET: 客戶聯絡人/Create
         public ActionResult Create()
         {
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱");
+            ViewBag.客戶Id = new SelectList(客戶資料repo.取得未刪除資料(), "Id", "客戶名稱");
             return View();
         }
 
@@ -50,14 +52,14 @@ namespace MVC_HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "Id,客戶Id,職稱,姓名,Email,手機,電話,is_del")] 客戶聯絡人 客戶聯絡人)
         {
-            var is_exist = db.客戶聯絡人.Where(x => x.客戶Id == 客戶聯絡人.客戶Id && x.Email == 客戶聯絡人.Email).ToList();
+            var is_exist = 客戶聯絡人repo.Where(x => x.客戶Id == 客戶聯絡人.客戶Id && x.Email == 客戶聯絡人.Email).ToList();
 
             if (!is_exist.Any())
             {
                 if (ModelState.IsValid)
                 {
-                    db.客戶聯絡人.Add(客戶聯絡人);
-                    db.SaveChanges();
+                    客戶聯絡人repo.Add(客戶聯絡人);
+                    客戶聯絡人repo.UnitOfWork.Commit();
                     return RedirectToAction("Index");
                 }
             }
@@ -66,7 +68,7 @@ namespace MVC_HW.Controllers
                 ModelState.AddModelError("Email", "信箱重複");
             }
 
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            ViewBag.客戶Id = new SelectList(客戶資料repo.取得未刪除資料(), "Id", "客戶名稱", 客戶聯絡人.客戶Id);
             return View(客戶聯絡人);
         }
 
@@ -77,12 +79,12 @@ namespace MVC_HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            客戶聯絡人 客戶聯絡人 = 客戶聯絡人repo.Find(id.Value);
             if (客戶聯絡人 == null)
             {
                 return HttpNotFound();
             }
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            ViewBag.客戶Id = new SelectList(客戶資料repo.取得未刪除資料(), "Id", "客戶名稱", 客戶聯絡人.客戶Id);
             return View(客戶聯絡人);
         }
 
@@ -93,14 +95,14 @@ namespace MVC_HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "Id,客戶Id,職稱,姓名,Email,手機,電話,is_del")] 客戶聯絡人 客戶聯絡人)
         {
-            var is_exist = db.客戶聯絡人.Where(x => x.Id != 客戶聯絡人.Id && x.客戶Id == 客戶聯絡人.客戶Id && x.Email == 客戶聯絡人.Email).ToList();
+            var is_exist = 客戶聯絡人repo.Where(x => x.Id != 客戶聯絡人.Id && x.客戶Id == 客戶聯絡人.客戶Id && x.Email == 客戶聯絡人.Email).ToList();
 
             if (!is_exist.Any())
             {
                 if (ModelState.IsValid)
                 {
-                    db.Entry(客戶聯絡人).State = EntityState.Modified;
-                    db.SaveChanges();
+                    客戶聯絡人repo.UnitOfWork.Context.Entry(客戶聯絡人).State = EntityState.Modified;
+                    客戶聯絡人repo.UnitOfWork.Commit();
                     return RedirectToAction("Index");
                 }
             }
@@ -108,7 +110,7 @@ namespace MVC_HW.Controllers
             {
                 ModelState.AddModelError("Email", "信箱重複");
             }
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            ViewBag.客戶Id = new SelectList(客戶資料repo.取得未刪除資料(), "Id", "客戶名稱", 客戶聯絡人.客戶Id);
             return View(客戶聯絡人);
         }
 
@@ -119,7 +121,7 @@ namespace MVC_HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            客戶聯絡人 客戶聯絡人 = 客戶聯絡人repo.Find(id.Value);
             if (客戶聯絡人 == null)
             {
                 return HttpNotFound();
@@ -132,27 +134,26 @@ namespace MVC_HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
-            //db.客戶聯絡人.Remove(客戶聯絡人);
-            客戶聯絡人.is_del = true;
-            db.SaveChanges();
+            客戶聯絡人repo.delete(id);
 
             return RedirectToAction("Index");
         }
 
-        public ActionResult Search(string query)
+        public ActionResult Search(string query, int pageNo = 1)
         {
-            var result = db.客戶聯絡人.Where(x => x.姓名.Contains(query) && x.is_del == false).ToList();
+            var result = 客戶聯絡人repo.Where(x => x.姓名.Contains(query) && x.is_del == false).ToList();
+            var data = result.ToPagedList(pageNo, pageSize);
 
-            return View("Index", result);
+            return View(data);
         }
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+
+        //protected override void Dispose(bool disposing)
+        //{
+        //    if (disposing)
+        //    {
+        //        db.Dispose();
+        //    }
+        //    base.Dispose(disposing);
+        //}
     }
 }

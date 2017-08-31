@@ -7,18 +7,20 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using MVC_HW.Models;
+using PagedList;
 
 namespace MVC_HW.Controllers
 {
-    public class 客戶銀行資訊Controller : Controller
+    public class 客戶銀行資訊Controller : BaseController
     {
         private 客戶資料Entities db = new 客戶資料Entities();
 
         // GET: 客戶銀行資訊
-        public ActionResult Index()
+        public ActionResult Index(int pageNo = 1)
         {
-            var 客戶銀行資訊 = db.客戶銀行資訊.Include(客 => 客.客戶資料).Where(x=>x.is_del != true).Take(10);
-            return View(客戶銀行資訊);
+            var 客戶銀行資訊 = 客戶銀行資訊repo.取得未刪除資料().OrderBy(x=>x.Id);
+            var data = 客戶銀行資訊.ToPagedList(pageNo,pageSize);
+            return View(data);
         }
 
         // GET: 客戶銀行資訊/Details/5
@@ -28,7 +30,7 @@ namespace MVC_HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
+            客戶銀行資訊 客戶銀行資訊 = 客戶銀行資訊repo.Find(id.Value);
             if (客戶銀行資訊 == null)
             {
                 return HttpNotFound();
@@ -52,12 +54,12 @@ namespace MVC_HW.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.客戶銀行資訊.Add(客戶銀行資訊);
-                db.SaveChanges();
+                客戶銀行資訊repo.Add(客戶銀行資訊);
+                客戶銀行資訊repo.UnitOfWork.Commit();
                 return RedirectToAction("Index");
             }
 
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
+            ViewBag.客戶Id = new SelectList(客戶資料repo.取得未刪除資料(), "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
             return View(客戶銀行資訊);
         }
 
@@ -114,10 +116,8 @@ namespace MVC_HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
-            //db.客戶銀行資訊.Remove(客戶銀行資訊);
-            客戶銀行資訊.is_del = true;
-            db.SaveChanges();
+            客戶銀行資訊repo.delete(id);
+
             return RedirectToAction("Index");
         }
 
@@ -128,13 +128,13 @@ namespace MVC_HW.Controllers
             return View("Index", result);
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        //protected override void Dispose(bool disposing)
+        //{
+        //    if (disposing)
+        //    {
+        //        db.Dispose();
+        //    }
+        //    base.Dispose(disposing);
+        //}
     }
 }
